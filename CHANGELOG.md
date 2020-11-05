@@ -1,6 +1,8 @@
-## 0.1.2
+## 0.2.0
 
 - Support user defined extensions
+- Support building for web (empty implementation)
+- Added docs
 
 ## 0.1.1
 

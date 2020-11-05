@@ -4,4 +4,5 @@
 
 library dart_tooling_service_discovery;
 
-export 'src/server_announcement_manager.dart';
+export 'src/create_server.dart';
+export 'src/server_base.dart';

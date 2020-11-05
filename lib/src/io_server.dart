@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:dart_service_announcement/src/server_base.dart';
 import 'package:logging/logging.dart';
 import 'package:synchronized/synchronized.dart';
 
@@ -14,46 +15,40 @@ const int _COMMAND_REQUEST_QUERY = 0x01;
 const int _COMMAND_REQUEST_ANNOUNCE = 0x02;
 const int _ANNOUNCEMENT_VERSION = 3;
 
-const int EXTENSION_TYPE_ICON = 1;
-const int EXTENSION_TYPE_TAG = 2;
-
-///Minimal extension number for user-defined extensions
-const int EXTENSION_USER_START = 256;
-
-abstract class ToolingServer {
-  int get port;
-
-  int get protocolVersion;
-}
+ServerAnnouncementManager internalCreateServer(
+  String packageName,
+  int announcementPort,
+  ToolingServer server,
+) =>
+    _IOServerAnnouncementManager(packageName, announcementPort, server);
 
 /// TCP based server that handles client/server announcements.
 /// These announcements allow clients to discover all processes which currently have the tooling server enabled.
-class ServerAnnouncementManager {
+class _IOServerAnnouncementManager extends ServerAnnouncementManager {
   final _log = Logger('ServerAnnouncementManager');
 
-  final String packageName;
   final _extensions = <AnnouncementExtension>[];
 
-  final ToolingServer server;
-  final int announcementPort;
-  final lock = Lock();
+  final _lock = Lock();
   bool _running = false;
   ServerSocket _serverSocket;
   Socket _secondarySocket;
 
-  ServerAnnouncementManager(
-    this.packageName,
-    this.announcementPort,
-    this.server,
-  );
+  _IOServerAnnouncementManager(
+    String packageName,
+    int announcementPort,
+    ToolingServer server,
+  ) : super(packageName, announcementPort, server);
 
+  @override
   void addExtension(AnnouncementExtension extension) {
     _extensions.add(extension);
   }
 
   /// Start the announcement server
+  @override
   Future<void> start() async {
-    return lock.synchronized(() async {
+    return _lock.synchronized(() async {
       if (_running) return;
       _running = true;
 
@@ -84,7 +79,7 @@ class ServerAnnouncementManager {
                 // ignore: cascade_invocations
                 await streamer.close();
               });
-        await lock.synchronized(() {
+        await _lock.synchronized(() {
           if (_running) {
             _serverSocket = serverSocket;
           } else {
@@ -95,7 +90,7 @@ class ServerAnnouncementManager {
       } catch (e) {
         _log.finest('Got error in primary mode, trying as secondary');
         try {
-          if (await lock.synchronized(() => _running)) {
+          if (await _lock.synchronized(() => _running)) {
             awaitStreamer = false;
             await _runSecondary();
             _log.finest('Run secondary has returned');
@@ -113,13 +108,14 @@ class ServerAnnouncementManager {
         _log.finest('Run loop finished a loop with $data');
       }
 
-      return lock.synchronized(() => _running);
+      return _lock.synchronized(() => _running);
     });
   }
 
   /// Stop the announcement server
+  @override
   Future<void> stop() async {
-    return lock.synchronized(() async {
+    return _lock.synchronized(() async {
       _running = false;
       if (_serverSocket != null) {
         await _serverSocket.close();
@@ -259,7 +255,7 @@ class ServerAnnouncementManager {
     _log.finest('Connecting secondary socket');
     final secondarySocket =
         await Socket.connect(InternetAddress.loopbackIPv4, announcementPort);
-    final doContinue = await lock.synchronized(() async {
+    final doContinue = await _lock.synchronized(() async {
       if (_running) {
         _secondarySocket = secondarySocket;
         return true;
@@ -316,7 +312,7 @@ class ServerAnnouncementManager {
       await secondarySocket.close();
       _log.finest('Secondary closed for primary');
 
-      await lock.synchronized(() async {
+      await _lock.synchronized(() async {
         _secondarySocket = null;
       });
     });
@@ -325,7 +321,7 @@ class ServerAnnouncementManager {
       await secondarySocket.close();
       _log.finest('Secondary closed');
 
-      await lock.synchronized(() async {
+      await _lock.synchronized(() async {
         _secondarySocket = null;
       });
     });
@@ -347,51 +343,6 @@ class _Secondary {
     this.protocolVersion,
     this.extensions,
   );
-}
-
-abstract class AnnouncementExtension {
-  final int type;
-  final String name;
-
-  AnnouncementExtension(this.type, this.name);
-
-  int length();
-
-  List<int> data();
-}
-
-class StringExtension extends AnnouncementExtension {
-  final List<int> _data;
-
-  StringExtension(int type, String name, String data)
-      : _data = utf8.encode(data),
-        super(type, name);
-
-  @override
-  List<int> data() => _data;
-
-  @override
-  int length() => _data.length;
-}
-
-class TagExtension extends StringExtension {
-  TagExtension(String tag) : super(EXTENSION_TYPE_TAG, 'tag', tag);
-}
-
-class IconExtension extends StringExtension {
-  IconExtension(String tag) : super(EXTENSION_TYPE_ICON, 'icon', tag);
-}
-
-class UserExtension extends AnnouncementExtension {
-  final List<int> _data;
-
-  UserExtension(int type, this._data) : super(type, 'Extension $type');
-
-  @override
-  List<int> data() => _data;
-
-  @override
-  int length() => _data.length;
 }
 
 class _SocketByteView {
