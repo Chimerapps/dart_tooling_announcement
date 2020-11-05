@@ -18,13 +18,9 @@ const int EXTENSION_TYPE_ICON = 1;
 const int EXTENSION_TYPE_TAG = 2;
 
 abstract class ToolingServer {
-  final int port;
-  final int protocolVersion;
+  int get port;
 
-  ToolingServer(
-    this.port,
-    this.protocolVersion,
-  );
+  int get protocolVersion;
 }
 
 /// TCP based server that handles client/server announcements.
