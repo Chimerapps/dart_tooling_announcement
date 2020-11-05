@@ -7,7 +7,7 @@ A helper library for creating tooling announcement servers for tools such as nid
 A simple usage example:
 
 ```dart
-import 'package:dart_service_announcement/announcement.dart';
+import 'package:dart_service_announcement/dart_service_announcement.dart';
 
 class DemoServer extends ToolingServer {
   DemoServer(int port, int protocolVersion) : super(port, protocolVersion);
