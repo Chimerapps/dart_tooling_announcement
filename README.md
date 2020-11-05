@@ -10,12 +10,15 @@ A simple usage example:
 import 'package:dart_service_announcement/dart_service_announcement.dart';
 
 class DemoServer extends ToolingServer {
-  DemoServer(int port, int protocolVersion) : super(port, protocolVersion);
+  @override
+  int get port => 10290;
+
+  @override
+  int get protocolVersion => 4;
 }
 
 Future<void> main() async {
-  final manager =
-      ServerAnnouncementManager('com.example.test', 6394, DemoServer(10290, 2));
+  final manager = createToolingServer('com.example.test', 6394, DemoServer());
 
   await manager.start();
 
