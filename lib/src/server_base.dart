@@ -80,7 +80,7 @@ class UserExtension extends AnnouncementExtension {
 }
 
 ///Announcement manager
-abstract class ServerAnnouncementManager {
+abstract class BaseServerAnnouncementManager {
   ///The package name of the application under test/development
   final String packageName;
 
@@ -91,7 +91,7 @@ abstract class ServerAnnouncementManager {
   final int announcementPort;
 
   ///Constructor
-  ServerAnnouncementManager(
+  BaseServerAnnouncementManager(
       this.packageName, this.announcementPort, this.server);
 
   ///Adds the given extension to the server. Will not take effect until the server is (re)started

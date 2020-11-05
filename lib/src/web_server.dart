@@ -1,13 +1,13 @@
 import 'package:dart_service_announcement/src/server_base.dart';
 
-ServerAnnouncementManager internalCreateServer(
+BaseServerAnnouncementManager internalCreateServer(
   String packageName,
   int announcementPort,
   ToolingServer server,
 ) =>
     _DummyServerAnnouncementManager(packageName, announcementPort, server);
 
-class _DummyServerAnnouncementManager extends ServerAnnouncementManager {
+class _DummyServerAnnouncementManager extends BaseServerAnnouncementManager {
   _DummyServerAnnouncementManager(
     String packageName,
     int announcementPort,

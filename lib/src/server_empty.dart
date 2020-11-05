@@ -1,6 +1,6 @@
 import 'package:dart_service_announcement/src/server_base.dart';
 
-ServerAnnouncementManager internalCreateServer(
+BaseServerAnnouncementManager internalCreateServer(
   String packageName,
   int announcementPort,
   ToolingServer server,

@@ -13,7 +13,8 @@ class DemoServer extends ToolingServer {
 }
 
 Future<void> main() async {
-  final manager = createToolingServer('com.example.test', 6394, DemoServer());
+  final manager =
+      ServerAnnouncementManager('com.example.test', 6394, DemoServer());
 
   await manager.start();
 

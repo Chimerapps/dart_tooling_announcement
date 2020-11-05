@@ -15,7 +15,7 @@ const int _COMMAND_REQUEST_QUERY = 0x01;
 const int _COMMAND_REQUEST_ANNOUNCE = 0x02;
 const int _ANNOUNCEMENT_VERSION = 3;
 
-ServerAnnouncementManager internalCreateServer(
+BaseServerAnnouncementManager internalCreateServer(
   String packageName,
   int announcementPort,
   ToolingServer server,
@@ -24,7 +24,7 @@ ServerAnnouncementManager internalCreateServer(
 
 /// TCP based server that handles client/server announcements.
 /// These announcements allow clients to discover all processes which currently have the tooling server enabled.
-class _IOServerAnnouncementManager extends ServerAnnouncementManager {
+class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
   final _log = Logger('ServerAnnouncementManager');
 
   final _extensions = <AnnouncementExtension>[];

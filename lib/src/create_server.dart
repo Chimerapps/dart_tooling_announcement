@@ -5,7 +5,8 @@ import 'package:dart_service_announcement/src/server_empty.dart'
     if (dart.library.io) 'package:dart_service_announcement/src/io_server.dart';
 
 ///Create the announcement server for the tooling server
-ServerAnnouncementManager createToolingServer(
+// ignore: non_constant_identifier_names
+BaseServerAnnouncementManager ServerAnnouncementManager(
   String packageName,
   int announcementPort,
   ToolingServer server,
