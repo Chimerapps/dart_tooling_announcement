@@ -17,6 +17,9 @@ const int _ANNOUNCEMENT_VERSION = 3;
 const int EXTENSION_TYPE_ICON = 1;
 const int EXTENSION_TYPE_TAG = 2;
 
+///Minimal extension number for user-defined extensions
+const int EXTENSION_USER_START = 256;
+
 abstract class ToolingServer {
   int get port;
 
@@ -129,7 +132,7 @@ class ServerAnnouncementManager {
     });
   }
 
-  Future<void> _onSocket(Socket socket, List<_Secondary> secondarys) async {
+  Future<void> _onSocket(Socket socket, List<_Secondary> secondaries) async {
     _log.finest('Got announcement secondary connection');
     Stream<List<int>> dataStream;
     if (!socket.isBroadcast) {
@@ -143,17 +146,19 @@ class ServerAnnouncementManager {
     }
     final command = data[0];
     if (command == _COMMAND_REQUEST_QUERY) {
-      final responseData = await _handleQuery(dataStream, secondarys);
+      final responseData = await _handleQuery(dataStream, secondaries);
       socket.add(responseData);
       await socket.flush();
       await socket.close();
     } else if (command == _COMMAND_REQUEST_ANNOUNCE) {
-      await _handleAnnounce(dataStream, socket, data, secondarys);
+      await _handleAnnounce(dataStream, socket, data, secondaries);
     }
   }
 
   Future<List<int>> _handleQuery(
-      Stream<List<int>> socket, List<_Secondary> secondarys) async {
+    Stream<List<int>> socket,
+    List<_Secondary> secondaries,
+  ) async {
     _log.finest('Got query request');
     final responses = <Map<String, dynamic>>[];
 
@@ -170,7 +175,7 @@ class ServerAnnouncementManager {
     }).toList();
     responses.add(responseData);
 
-    secondarys.forEach((secondary) {
+    secondaries.forEach((secondary) {
       final secondaryDescriptor = <String, dynamic>{};
       secondaryDescriptor['packageName'] = secondary.packageName;
       secondaryDescriptor['port'] = secondary.port;
@@ -191,7 +196,7 @@ class ServerAnnouncementManager {
     Stream<List<int>> socket,
     Socket done,
     List<int> initialData,
-    List<_Secondary> secondarys,
+    List<_Secondary> secondaries,
   ) async {
     _log.finest('Got secondary announce');
 
@@ -226,6 +231,9 @@ class ServerAnnouncementManager {
           case EXTENSION_TYPE_ICON:
             extensions.add(IconExtension(utf8.decode(extensionBytes)));
             break;
+          default:
+            extensions.add(UserExtension(type, extensionBytes));
+            break;
         }
       }
     }
@@ -238,11 +246,11 @@ class ServerAnnouncementManager {
       extensions,
     );
     _log.finest('Got new secondary: $packageName on $port');
-    secondarys.add(secondary);
+    secondaries.add(secondary);
     // ignore: unawaited_futures
     socket.drain().then((_) {
       print('Secondary at $port closed');
-      return secondarys.remove(secondary);
+      return secondaries.remove(secondary);
     });
     return;
   }
@@ -372,6 +380,18 @@ class TagExtension extends StringExtension {
 
 class IconExtension extends StringExtension {
   IconExtension(String tag) : super(EXTENSION_TYPE_ICON, 'icon', tag);
+}
+
+class UserExtension extends AnnouncementExtension {
+  final List<int> _data;
+
+  UserExtension(int type, this._data) : super(type, 'Extension $type');
+
+  @override
+  List<int> data() => _data;
+
+  @override
+  int length() => _data.length;
 }
 
 class _SocketByteView {
