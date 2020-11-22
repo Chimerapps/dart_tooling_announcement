@@ -31,8 +31,8 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
 
   final _lock = Lock();
   bool _running = false;
-  ServerSocket _serverSocket;
-  Socket _secondarySocket;
+  ServerSocket? _serverSocket;
+  Socket? _secondarySocket;
 
   _IOServerAnnouncementManager(
     String packageName,
@@ -117,11 +117,13 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
   Future<void> stop() async {
     return _lock.synchronized(() async {
       _running = false;
-      if (_serverSocket != null) {
-        await _serverSocket.close();
+      final server = _serverSocket;
+      if (server != null) {
+        await server.close();
       }
-      if (_secondarySocket != null) {
-        await _secondarySocket.close();
+      final secondary = _secondarySocket;
+      if (secondary != null) {
+        await secondary.close();
       }
       _serverSocket = null;
       _secondarySocket = null;
@@ -206,13 +208,12 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
     final protocolVersion = await byteView.getInt32();
 
     final extensions = <AnnouncementExtension>[];
-    String icon;
     if (version == 2) {
       final iconLength = await byteView.getInt32();
       if (iconLength > 0) {
-        icon = utf8.decode(await byteView.getBytes(iconLength));
+        final icon = utf8.decode(await byteView.getBytes(iconLength));
+        extensions.add(IconExtension(icon));
       }
-      extensions.add(IconExtension(icon));
     } else if (version >= _ANNOUNCEMENT_VERSION) {
       final extensionCount = await byteView.getInt16();
       for (var i = 0; i < extensionCount; ++i) {

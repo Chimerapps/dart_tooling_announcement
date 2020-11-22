@@ -1,16 +1,14 @@
 name: dart_service_announcement
 description: Helper libraries for creating discoverable development services
-version: 0.2.1
+version: 1.0.0-nullsafety.0
 homepage: https://github.com/Chimerapps/dart_tooling_announcement
 
 environment:
-  sdk: '>=2.10.0 <3.0.0'
+  sdk: '>=2.12.0-0 <3.0.0'
 
 dependencies:
-  synchronized: ^2.1.0
-  logging: ^0.11.4
-  meta: ^1.1.8
+  logging: ^1.0.0-nullsafety.0
+  synchronized: ^3.0.0-nullsafety.1
 
 dev_dependencies:
-  pedantic: ^1.9.0
-  test: ^1.14.4
+  pedantic: ^1.10.0-nullsafety.3
