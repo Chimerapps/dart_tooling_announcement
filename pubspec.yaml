@@ -1,6 +1,6 @@
 name: dart_service_announcement
 description: Helper libraries for creating discoverable development services
-version: 1.0.0-nullsafety.0
+version: 1.0.0-nullsafety.1
 homepage: https://github.com/Chimerapps/dart_tooling_announcement
 
 environment:

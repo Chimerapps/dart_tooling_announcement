@@ -378,7 +378,7 @@ class _SocketByteView {
   }
 
   Future<int> getByte() async {
-    if (_currentBlob != null && _offsetInCurrentBlob < _currentBlob.length) {
+    if (_offsetInCurrentBlob < _currentBlob.length) {
       return _currentBlob[_offsetInCurrentBlob++];
     }
 
