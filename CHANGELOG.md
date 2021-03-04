@@ -1,3 +1,7 @@
+## 1.0.0
+
+- Nullsafety release
+
 ## 1.0.0-nullsafety.1
 
 - Cleanup warning
