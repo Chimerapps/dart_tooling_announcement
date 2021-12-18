@@ -26,4 +26,7 @@ class _DummyServerAnnouncementManager extends BaseServerAnnouncementManager {
   Future<void> stop() {
     return Future.value();
   }
+
+  @override
+  void removeExtension(AnnouncementExtension extension) {}
 }

@@ -22,8 +22,12 @@ abstract class ToolingServer {
   int get protocolVersion;
 }
 
-///Base for announcement extensions. Announcement extensions add additional functionalities to the discovery process without chaning the api
-///User extensions should start with types above `EXTENSION_USER_START`, anything below is reserved
+///Base for announcement extensions.
+///Announcement extensions add additional functionalities to the
+///discovery process without changing the api
+///
+///User extensions should start with types above
+///[EXTENSION_USER_START], anything below is reserved
 abstract class AnnouncementExtension {
   ///The type id of the extension
   final int type;
@@ -59,11 +63,31 @@ class StringExtension extends AnnouncementExtension {
 ///Tag extension
 class TagExtension extends StringExtension {
   TagExtension(String tag) : super(EXTENSION_TYPE_TAG, 'tag', tag);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TagExtension &&
+          runtimeType == other.runtimeType &&
+          _dataEqual(data(), other.data());
+
+  @override
+  int get hashCode => 0;
 }
 
 ///Icon extension
 class IconExtension extends StringExtension {
-  IconExtension(String tag) : super(EXTENSION_TYPE_ICON, 'icon', tag);
+  IconExtension(String icon) : super(EXTENSION_TYPE_ICON, 'icon', icon);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is IconExtension &&
+          runtimeType == other.runtimeType &&
+          _dataEqual(data(), other.data());
+
+  @override
+  int get hashCode => 0;
 }
 
 ///Base class for any unknown user extensions
@@ -87,19 +111,35 @@ abstract class BaseServerAnnouncementManager {
   ///The server that is being announcement
   final ToolingServer server;
 
-  ///The port on which to announce. This is a constant per tooling type, eg niddler uses 6394
+  ///The port on which to announce.
+  ///This is a constant per tooling type, eg niddler uses 6394
   final int announcementPort;
 
   ///Constructor
   BaseServerAnnouncementManager(
       this.packageName, this.announcementPort, this.server);
 
-  ///Adds the given extension to the server. Will not take effect until the server is (re)started
+  ///Adds the given extension to the server.
+  ///Will not take effect until the server is (re)started
   void addExtension(AnnouncementExtension extension);
+
+  ///Removes the given extension from the server.
+  ///Will not take effect until the server is (re)started
+  ///
+  ///The == operator is used to find the extension to remove
+  void removeExtension(AnnouncementExtension extension);
 
   ///Starts the announcement server
   Future<void> start();
 
   ///Stops the announcement server
   Future<void> stop();
+}
+
+bool _dataEqual(List<int> a, List<int> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; ++i) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
 }

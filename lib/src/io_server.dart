@@ -45,6 +45,11 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
     _extensions.add(extension);
   }
 
+  @override
+  void removeExtension(AnnouncementExtension extension) {
+    _extensions.removeWhere((element) => element == extension);
+  }
+
   /// Start the announcement server
   @override
   Future<void> start() async {

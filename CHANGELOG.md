@@ -1,3 +1,7 @@
+## 1.0.1
+
+- Allow users to remove extensions
+
 ## 1.0.0
 
 - Nullsafety release
