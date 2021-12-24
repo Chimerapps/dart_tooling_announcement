@@ -2,16 +2,18 @@
 // All rights reserved. Use of this source code is governed by
 // an MIT license that can be found in the LICENSE file.
 
+// ignore_for_file: constant_identifier_names
+
 import 'dart:convert';
 
 ///Extension type for the icon extension
-const int EXTENSION_TYPE_ICON = 1;
+const int extensionTypeIcon = 1;
 
 ///Extension type for the tag extension
-const int EXTENSION_TYPE_TAG = 2;
+const int extensionTypeTag = 2;
 
 ///Minimal extension number for user-defined extensions
-const int EXTENSION_USER_START = 256;
+const int extensionUserStart = 256;
 
 ///Encapsulates the tooling server
 abstract class ToolingServer {
@@ -27,7 +29,7 @@ abstract class ToolingServer {
 ///discovery process without changing the api
 ///
 ///User extensions should start with types above
-///[EXTENSION_USER_START], anything below is reserved
+///[extensionUserStart], anything below is reserved
 abstract class AnnouncementExtension {
   ///The type id of the extension
   final int type;
@@ -62,7 +64,7 @@ class StringExtension extends AnnouncementExtension {
 
 ///Tag extension
 class TagExtension extends StringExtension {
-  TagExtension(String tag) : super(EXTENSION_TYPE_TAG, 'tag', tag);
+  TagExtension(String tag) : super(extensionTypeTag, 'tag', tag);
 
   @override
   bool operator ==(Object other) =>
@@ -77,7 +79,7 @@ class TagExtension extends StringExtension {
 
 ///Icon extension
 class IconExtension extends StringExtension {
-  IconExtension(String icon) : super(EXTENSION_TYPE_ICON, 'icon', icon);
+  IconExtension(String icon) : super(extensionTypeIcon, 'icon', icon);
 
   @override
   bool operator ==(Object other) =>
@@ -143,3 +145,15 @@ bool _dataEqual(List<int> a, List<int> b) {
   }
   return true;
 }
+
+///Minimal extension number for user-defined extensions
+///@Deprecated('Deprecated, use extensionUserStart instead')
+const int EXTENSION_USER_START = extensionUserStart;
+
+///Extension type for the tag extension
+@Deprecated('Deprecated, use extensionTypeTag instead')
+const int EXTENSION_TYPE_TAG = extensionTypeTag;
+
+///Extension type for the icon extension
+@Deprecated('Deprecated, use extensionTypeIcon instead')
+const int EXTENSION_TYPE_ICON = extensionTypeIcon;

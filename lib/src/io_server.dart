@@ -11,9 +11,9 @@ import 'package:dart_service_announcement/src/server_base.dart';
 import 'package:logging/logging.dart';
 import 'package:synchronized/synchronized.dart';
 
-const int _COMMAND_REQUEST_QUERY = 0x01;
-const int _COMMAND_REQUEST_ANNOUNCE = 0x02;
-const int _ANNOUNCEMENT_VERSION = 3;
+const int _commandRequestQuery = 0x01;
+const int _commandRequestAnnounce = 0x02;
+const int _announcementVersion = 3;
 
 BaseServerAnnouncementManager internalCreateServer(
   String packageName,
@@ -29,10 +29,11 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
 
   final _extensions = <AnnouncementExtension>[];
 
-  final _lock = Lock();
+  final _lock = Lock(reentrant: true);
   bool _running = false;
   ServerSocket? _serverSocket;
   Socket? _secondarySocket;
+  Completer<void>? _stopCompleter;
 
   _IOServerAnnouncementManager(
     String packageName,
@@ -56,14 +57,16 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
     return _lock.synchronized(() async {
       if (_running) return;
       _running = true;
+      _stopCompleter = Completer<void>();
 
-      _startLoop();
+      await _startLoop();
     });
   }
 
-  void _startLoop() {
+  Future<void> _startLoop() {
     final _secondaries = <_Secondary>[];
 
+    final startWaiter = Completer<void>();
     Future.doWhile(() async {
       final streamer = StreamController();
       var awaitStreamer = true;
@@ -86,16 +89,19 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
               });
         await _lock.synchronized(() {
           if (_running) {
+            if (!startWaiter.isCompleted) startWaiter.complete();
             _serverSocket = serverSocket;
           } else {
             serverSocket.close();
             _secondarySocket = null;
+            if (!startWaiter.isCompleted) startWaiter.complete();
           }
         });
       } catch (e) {
         _log.finest('Got error in primary mode, trying as secondary');
         try {
           if (await _lock.synchronized(() => _running)) {
+            if (!startWaiter.isCompleted) startWaiter.complete();
             awaitStreamer = false;
             await _runSecondary();
             _log.finest('Run secondary has returned');
@@ -104,23 +110,29 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
           _log.finest('Got error in secondary mode');
           awaitStreamer = false;
         } finally {
+          if (!startWaiter.isCompleted) startWaiter.complete();
           await Future.delayed(const Duration(seconds: 1));
         }
       }
       if (awaitStreamer) {
         _log.finest('Awaiting run loop results');
         final data = await streamer.stream.first;
-        _log.finest('Run loop finished a loop with $data');
+        _log.finest('Run loop finished a loop with $data. Running: $_running');
       }
 
       return _lock.synchronized(() => _running);
-    });
+    }).then((_) {
+      _stopCompleter?.complete();
+      _log.finest('Announcement loop finished');
+    }, onError: (e) => _stopCompleter?.complete());
+
+    return startWaiter.future;
   }
 
   /// Stop the announcement server
   @override
   Future<void> stop() async {
-    return _lock.synchronized(() async {
+    await _lock.synchronized(() async {
       _running = false;
       final server = _serverSocket;
       if (server != null) {
@@ -133,6 +145,10 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
       _serverSocket = null;
       _secondarySocket = null;
     });
+    final stop = _stopCompleter;
+    if (stop != null) {
+      await stop.future;
+    }
   }
 
   Future<void> _onSocket(Socket socket, List<_Secondary> secondaries) async {
@@ -148,12 +164,12 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
       return socket.close();
     }
     final command = data[0];
-    if (command == _COMMAND_REQUEST_QUERY) {
+    if (command == _commandRequestQuery) {
       final responseData = await _handleQuery(dataStream, secondaries);
       socket.add(responseData);
       await socket.flush();
       await socket.close();
-    } else if (command == _COMMAND_REQUEST_ANNOUNCE) {
+    } else if (command == _commandRequestAnnounce) {
       await _handleAnnounce(dataStream, socket, data, secondaries);
     }
   }
@@ -178,7 +194,7 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
     }).toList();
     responses.add(responseData);
 
-    secondaries.forEach((secondary) {
+    for (final secondary in secondaries) {
       final secondaryDescriptor = <String, dynamic>{};
       secondaryDescriptor['packageName'] = secondary.packageName;
       secondaryDescriptor['port'] = secondary.port;
@@ -191,7 +207,7 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
         };
       }).toList();
       responses.add(secondaryDescriptor);
-    });
+    }
     return utf8.encode(json.encode(responses));
   }
 
@@ -219,7 +235,7 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
         final icon = utf8.decode(await byteView.getBytes(iconLength));
         extensions.add(IconExtension(icon));
       }
-    } else if (version >= _ANNOUNCEMENT_VERSION) {
+    } else if (version >= _announcementVersion) {
       final extensionCount = await byteView.getInt16();
       for (var i = 0; i < extensionCount; ++i) {
         final type = await byteView.getInt16();
@@ -227,10 +243,10 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
         final extensionBytes = await byteView.getBytes(size);
 
         switch (type) {
-          case EXTENSION_TYPE_TAG:
+          case extensionTypeTag:
             extensions.add(TagExtension(utf8.decode(extensionBytes)));
             break;
-          case EXTENSION_TYPE_ICON:
+          case extensionTypeIcon:
             extensions.add(IconExtension(utf8.decode(extensionBytes)));
             break;
           default:
@@ -276,14 +292,16 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
     //Command + version + packageName length + packageName + port + pid + protocolVersion + extension count
     var length = 1 + 4 + 4 + packageNameBytes.length + 4 + 4 + 4 + 2;
 
-    _extensions.forEach((ex) => length += 4 + ex.length());
+    for (final ex in _extensions) {
+      length += 4 + ex.length();
+    }
 
     final data = Int8List(length);
     final bytes = data.buffer;
     final byteView = ByteData.view(bytes);
-    data[0] = _COMMAND_REQUEST_ANNOUNCE;
+    data[0] = _commandRequestAnnounce;
     var offset = 1;
-    byteView.setInt32(offset, _ANNOUNCEMENT_VERSION);
+    byteView.setInt32(offset, _announcementVersion);
     offset += 4;
     byteView.setInt32(offset, packageNameBytes.length);
     offset += 4;
@@ -298,14 +316,14 @@ class _IOServerAnnouncementManager extends BaseServerAnnouncementManager {
     byteView.setInt16(offset, _extensions.length);
     offset += 2;
 
-    _extensions.forEach((extension) {
+    for (final extension in _extensions) {
       byteView.setInt16(offset, extension.type);
       offset += 2;
       byteView.setInt16(offset, extension.length());
       offset += 2;
       data.setAll(offset, extension.data());
       offset += extension.length();
-    });
+    }
 
     _log.finest('Sending secondary data');
     secondarySocket.add(data);

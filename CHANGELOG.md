@@ -1,3 +1,8 @@
+## 1.0.2
+
+- Fix start not waiting for start to finish
+- Fix stop not waiting for stop to finish
+
 ## 1.0.1
 
 - Allow users to remove extensions
