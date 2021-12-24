@@ -1,3 +1,7 @@
+## 1.0.3
+
+- Missed deprecation on constant
+
 ## 1.0.2
 
 - Fix start not waiting for start to finish

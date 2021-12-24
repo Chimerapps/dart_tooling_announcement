@@ -2,8 +2,6 @@
 // All rights reserved. Use of this source code is governed by
 // an MIT license that can be found in the LICENSE file.
 
-// ignore_for_file: constant_identifier_names
-
 import 'dart:convert';
 
 ///Extension type for the icon extension
@@ -147,13 +145,16 @@ bool _dataEqual(List<int> a, List<int> b) {
 }
 
 ///Minimal extension number for user-defined extensions
-///@Deprecated('Deprecated, use extensionUserStart instead')
+@Deprecated('Deprecated, use extensionUserStart instead')
+// ignore: constant_identifier_names
 const int EXTENSION_USER_START = extensionUserStart;
 
 ///Extension type for the tag extension
 @Deprecated('Deprecated, use extensionTypeTag instead')
+// ignore: constant_identifier_names
 const int EXTENSION_TYPE_TAG = extensionTypeTag;
 
 ///Extension type for the icon extension
 @Deprecated('Deprecated, use extensionTypeIcon instead')
+// ignore: constant_identifier_names
 const int EXTENSION_TYPE_ICON = extensionTypeIcon;
