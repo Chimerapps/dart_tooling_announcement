@@ -20,9 +20,6 @@ abstract class ToolingServer {
 
   ///The protocol version this tooling server 'speaks'
   int get protocolVersion;
-
-  ///The name of the tooling server. Must be in [a-zA-Z0-9_]. Eg: niddler, local_storage_inspector
-  String get name;
 }
 
 ///Base for announcement extensions.

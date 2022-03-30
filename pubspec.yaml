@@ -1,6 +1,6 @@
 name: dart_service_announcement
 description: Helper libraries for creating discoverable development services
-version: 1.1.0
+version: 1.2.0
 homepage: https://github.com/Chimerapps/dart_tooling_announcement
 
 environment:

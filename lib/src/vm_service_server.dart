@@ -20,7 +20,9 @@ class _VMServiceServerAnnouncementManager
     int announcementPort,
     ToolingServer server,
   ) : super(packageName, announcementPort, server) {
-    registerExtension('ext.${server.name}.query', (method, params) async {
+    registerExtension(
+        'ext.dart_service_announcement_${_encodeSimpleString(announcementPort)}.query',
+        (method, params) async {
       if (!_started) {
         return ServiceExtensionResponse.error(
           -1,
@@ -64,4 +66,16 @@ class _VMServiceServerAnnouncementManager
     _started = false;
     return Future.value();
   }
+}
+
+String _encodeSimpleString(int digits) {
+  return utf8.decode(_digitsOf(digits).map((e) => e + 0x41).toList());
+}
+
+Iterable<int> _digitsOf(int number) sync* {
+  var remainder = number;
+  do {
+    yield remainder.remainder(10);
+    remainder ~/= 10;
+  } while (remainder != 0);
 }
