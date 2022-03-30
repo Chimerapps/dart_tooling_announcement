@@ -1,3 +1,7 @@
+## 1.1.0
+
+- Add support for announcements using the vm service, this means from now on discovery can work on web as well
+
 ## 1.0.3
 
 - Missed deprecation on constant
