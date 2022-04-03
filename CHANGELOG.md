@@ -1,4 +1,4 @@
-## 1.2.2
+## 1.2.3
 
 - Ensure we can create vm announcement manager multiple times
 

@@ -14,7 +14,7 @@ class _VMServiceExtensionHelper {
   static final _instances = <int, _VMServiceExtensionHelper>{};
 
   factory _VMServiceExtensionHelper(int port) =>
-      _instances.putIfAbsent(port, () => _VMServiceExtensionHelper(port));
+      _instances.putIfAbsent(port, () => _VMServiceExtensionHelper._(port));
 
   Future<ServiceExtensionResponse> Function(
       String method, Map<String, String> params)? handler;
