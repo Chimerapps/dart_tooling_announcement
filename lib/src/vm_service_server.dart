@@ -10,19 +10,48 @@ BaseServerAnnouncementManager internalCreateVMServiceServer(
 ) =>
     _VMServiceServerAnnouncementManager(packageName, announcementPort, server);
 
+class _VMServiceExtensionHelper {
+  static final _instances = <int, _VMServiceExtensionHelper>{};
+
+  factory _VMServiceExtensionHelper(int port) =>
+      _instances.putIfAbsent(port, () => _VMServiceExtensionHelper(port));
+
+  Future<ServiceExtensionResponse> Function(
+      String method, Map<String, String> params)? handler;
+
+  _VMServiceExtensionHelper._(int port) {
+    registerExtension(
+        'ext.dart_service_announcement_${_encodeSimpleString(port)}.query',
+        _handle);
+  }
+
+  Future<ServiceExtensionResponse> _handle(
+      String method, Map<String, String> params) {
+    final localHandler = handler;
+    if (localHandler == null) {
+      return Future.value(ServiceExtensionResponse.error(
+        -1,
+        'Announcement server stopped',
+      ));
+    }
+    return localHandler(method, params);
+  }
+}
+
 class _VMServiceServerAnnouncementManager
     extends BaseServerAnnouncementManager {
   final _extensions = <AnnouncementExtension>[];
   var _started = false;
+
+  late final _VMServiceExtensionHelper _extensionHelper;
 
   _VMServiceServerAnnouncementManager(
     String packageName,
     int announcementPort,
     ToolingServer server,
   ) : super(packageName, announcementPort, server) {
-    registerExtension(
-        'ext.dart_service_announcement_${_encodeSimpleString(announcementPort)}.query',
-        (method, params) async {
+    _extensionHelper = _VMServiceExtensionHelper(announcementPort);
+    _extensionHelper.handler = (method, params) async {
       if (!_started) {
         return ServiceExtensionResponse.error(
           -1,
@@ -42,7 +71,7 @@ class _VMServiceServerAnnouncementManager
         };
       }).toList();
       return ServiceExtensionResponse.result(json.encode(responseData));
-    });
+    };
   }
 
   @override

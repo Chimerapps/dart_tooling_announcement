@@ -1,3 +1,7 @@
+## 1.2.2
+
+- Ensure we can create vm announcement manager multiple times
+
 ## 1.2.0
 
 - Remove the name from the tooling server and use a string encoded version of the announcement port instead

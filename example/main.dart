@@ -10,7 +10,6 @@ class DemoServer extends ToolingServer {
 
   @override
   int get protocolVersion => 4;
-
 }
 
 Future<void> main() async {
